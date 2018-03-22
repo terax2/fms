@@ -1,4 +1,4 @@
-2011.05.31 kde
+2018.03.22 terax2
 
 configure 실행시 bin 과 lib 위치지정
-./configure --bindir=/avsol/bin --libdir=/avsol/lib
+./configure --prefix=/fsapp/FMS
