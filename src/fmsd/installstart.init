@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/fsapp/FMS/scripts/fmsd.init stop
+make install
+/fsapp/FMS/scripts/fmsd.init start
+
+

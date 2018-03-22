@@ -1,0 +1,1 @@
+SUBDIRS = libcom fmsd fsnmpd

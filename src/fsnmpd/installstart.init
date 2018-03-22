@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/fsapp/FMS/scripts/fsnmpd.init stop
+make install
+/fsapp/FMS/scripts/fsnmpd.init start
+
+
