@@ -1,0 +1,41 @@
+autoscan: warning: missing AC_PROG_INSTALL wanted by: 
+	ltmain.sh:606
+	ltmain.sh:607
+	ltmain.sh:1677
+	ltmain.sh:1682
+	ltmain.sh:1687
+	ltmain.sh:1688
+	ltmain.sh:3626
+	ltmain.sh:5759
+	ltmain.sh:5760
+	ltmain.sh:5845
+	ltmain.sh:5966
+	ltmain.sh:6205
+	ltmain.sh:6715
+	ltmain.sh:6715
+	ltmain.sh:6793
+	ltmain.sh:6795
+	ltmain.sh:6800
+	ltmain.sh:6803
+	ltmain.sh:6830
+	ltmain.sh:6830
+	ltmain.sh:6831
+autoscan: warning: missing AC_PROG_LN_S wanted by: 
+	ltmain.sh:875
+	ltmain.sh:5535
+	ltmain.sh:5536
+autoscan: warning: missing AC_PROG_MAKE_SET wanted by: 
+	ltmain.sh:889
+	ltmain.sh:969
+	ltmain.sh:1041
+	ltmain.sh:2269
+	ltmain.sh:2838
+	ltmain.sh:3575
+	ltmain.sh:3615
+	ltmain.sh:3626
+	ltmain.sh:3688
+	ltmain.sh:3740
+	ltmain.sh:4550
+	ltmain.sh:5026
+autoscan: warning: missing AC_PROG_RANLIB wanted by: 
+	ltmain.sh:6857

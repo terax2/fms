@@ -1,0 +1,90 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.59)
+AC_INIT([HVaaS], [1.0], [kde@gabia.com])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_CONFIG_SRCDIR([config.h.in])
+AC_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_LIBTOOL
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+
+AC_CHECK_PROGS([SDL_CONFIG], [sdl-config], [:])
+if test "$SDL_CONFIG" = :; then
+    AC_MSG_ERROR([You must have the SDL development headers installed to build.])
+fi
+
+AC_SUBST([SDL_LIBS], [`sdl-config --libs`])
+AC_SUBST([SDL_CFLAGS], [`sdl-config --cflags`])
+#AC_SUBST(LDFLAGS)
+#AC_SUBST([LDFLAGS],[`-static`])
+AC_SUBST(CFLAGS)
+
+# Checks for libraries.
+AC_CHECK_LIB([SDL], [SDL_CreateThread],, AC_MSG_ERROR([You must have the SDL development headers installed to build.]))
+AC_CHECK_LIB([pthread], [pthread_create],, AC_MSG_ERROR([You must have the pthread headers installed to build.]))
+AC_CHECK_LIB([tcmalloc], [tc_malloc],, AC_MSG_ERROR([You must have the tcmalloc development headers installed to build.]))
+
+#AC_CHECK_LIB([mysqlclient], [mysql_query],, AC_MSG_ERROR([You must have the mysql development headers installed to build.]))
+#AC_CHECK_LIB([pcrecpp], [RE().PartialMatch],, AC_MSG_ERROR([You must have the pcrecpp development headers installed to build.]))
+#AC_CHECK_LIB([boost_regex], [regex_match],, AC_MSG_ERROR([You must have the boost_regex development headers installed to build.]))
+#AC_CHECK_LIB([avcodec], [avcodec_init],, AC_MSG_ERROR([You must have the ffmpeg development headers installed to build.]))
+#AC_CHECK_LIB([avformat], [av_register_all],, AC_MSG_ERROR([You must have the ffmpeg development headers installed to build.]))
+#AC_CHECK_LIB([avutil], [main],, AC_MSG_ERROR([You must have the avutil headers installed to build.]))
+#AC_CHECK_LIB([swscale], [sws_scale],, AC_MSG_ERROR([You must have the swsscale headers installed to build.]))
+
+
+# Checks for header files.
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([xmlrpc-c/base.h XmlRpcCpp.h])
+
+#AC_CHECK_HEADERS([ffmpeg/avutil.h ffmpeg/avcodec.h ffmpeg/avformat.h])
+#AC_CHECK_HEADERS([libavutil/avutil.h libavcodec/avcodec.h libavformat/avformat.h libswscale/swscale.h])
+#AC_CHECK_HEADERS([avutil.h avcodec.h avformat.h swscale.h])
+
+AC_HEADER_STDC
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_HEADER_TIME
+AC_C_VOLATILE
+AC_C_BIGENDIAN
+
+#AC_TYPE_INT32_T
+#AC_TYPE_INT64_T
+#AC_TYPE_UINT16_T
+#AC_TYPE_UINT32_T
+#AC_TYPE_UINT64_T
+#AC_TYPE_UINT8_T
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_SIZEOF(long)
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_FUNC_SETPGRP
+AC_TYPE_SIGNAL
+AC_FUNC_STAT
+AC_FUNC_STRTOD
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([gethostbyaddr gethostbyname gethostname gettimeofday inet_ntoa memmove memset mkdir modf pow select socket sqrt strcasecmp strchr strcspn strdup strrchr strstr strtol uname])
+
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+                 src/libcom/Makefile
+                 src/fmsd/Makefile
+                 src/fsnmpd/Makefile
+                 test/Makefile])
+AC_OUTPUT

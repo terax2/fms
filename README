@@ -1,0 +1,4 @@
+2011.05.31 kde
+
+configure 실행시 bin 과 lib 위치지정
+./configure --bindir=/avsol/bin --libdir=/avsol/lib

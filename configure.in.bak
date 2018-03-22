@@ -1,0 +1,52 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.59)
+AC_INIT([HVAAS], [1.0], [kde@gabia.com])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_CONFIG_SRCDIR([config.h.in])
+AC_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CXX
+
+# Checks for libraries.
+AC_CHECK_LIB([SDL], [SDL_CreateThread],, AC_MSG_ERROR([You must have the SDL development headers installed to build.]))
+AC_CHECK_LIB([pthread], [pthread_create],, AC_MSG_ERROR([You must have the pthread headers installed to build.]))
+
+
+# Checks for header files.
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/time.h unistd.h])
+
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_HEADER_TIME
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
+AC_C_VOLATILE
+AC_C_BIGENDIAN
+
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_SIZEOF(long)
+
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_TYPE_SIGNAL
+AC_HEADER_STDC
+AC_CHECK_FUNCS([gettimeofday memset strchr strstr])
+
+
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+                 src/filecast/Makefile
+                 src/libcom/Makefile
+                 src/livecast/Makefile
+                 src/manager/Makefile])
+AC_OUTPUT
