@@ -1,0 +1,208 @@
+* 배포 방법
+python 파일 -------------->  실행 파일 ----------->  Binary RPM package
+              pyinstaller                rpmbuild
+(배포에 필요한 개발 환경 설정은 ../../doc의 개발환경.txt 참조)
+
+* .rpm 파일 생성 방법
+1. buildpkg.sh 실행
+(2013.10.7 현재)
+1-1. signature 사용할 경우(아래 참고)에도, password 자동 입력 (직접 입력
+불필요)
+   - expect 스크립트를 이용해서 gpg pass phrase 자동 입력 (yum install expect
+	 필요)
+   - expect 에서 사용하는 tcl 버전에 따라 문법이 달라 2가지로 운용(tcl 8.5
+	 이상 및 8.4 이하)
+     => rpmmake_tcl8.5, rpmmake_tcl8.4 파일 참조
+2. buildpkg.sh를 실행한 디렉토리 (buildpkg.sh가 있는 디렉토리가 아님) 하위에, 
+packages 디렉토리에 snmp_extend-[ver]-[rel].[arch].tar.gz 생성
+   - rpm 및 readme 파일 압축
+
+* buildpkg.sh 정상 동작위한 선행 작업
+설치 필요 yum package
+python2.7
+rpm-build
+expect
+subversion
+
+
+** 본인 계정 디렉토리 등으로 빌드 위치를 변경하고 싶으면 설정
+(설정 안하면 디폴트 /usr/local/src/redhat 에서 빌드됨)
+- 가능하면 본인 계정 디렉토리로 하는것을 추천.
+(tmp 디렉토리가 작을 경우, full 나서 빌드 실패 하는 등의 문제가 있으므로)
+0-1. ~/.rpmmacros 파일 아래와 같이 생성
+- rpm build용 top 디렉토리 path 설정 수정
+ex)
+%_topdir /home/test/sandbox
+%_tmppath %{_topdir}/tmp
+%_builddir %{_topdir}/BUILD
+%_rpmdir %{_topdir}/RPMS
+%_sourcedir %{_topdir}/SOURCES
+%_specdir %{_topdir}/SPECS
+%_srcrpmdir %{_topdir}/SRPMS
+- 하위 디렉토리 만들어줌(tmp, BUILD, SOURCES, SPECS, SRPMS, RPMS등)
+
+0-2. rpm Signature 작성 준비 (패키지가 진품 맞는지 확인 위한 auth기능)
+- GPG(GNU Privacy Guard) 이용 
+0-2-1. Signature 사용 안할 경우,
+  - buildpkg.sh 에서 --sign 제거
+0-2-2. Signature 사용할 경우,
+  o RPM-GPG-KEY-gabia.private 파일의 private key를 gpg로 읽어들임
+	- mkdir ~/.gnupg
+    - gpg --import RPM-GPG-KEY-gabia.private
+	- gpg --list-secret-keys 로 확인
+	- gpg --import RPM-GPG-KEY-gabia
+	- gpg --list-keys 로 확인
+  o ~/.rpmmacros에 다음 라인 추가  
+    - %_signature gpg
+    - %_gpg_name Gabia, Inc
+
+1. 파일 복사 위한 buildpkg.sh의 path 수정
+- 버전, 릴리즈 등 수정
+ex)
+VER = 0.0.1
+REL = 1
+
+* gcloud monitor dev 서버를(182.162.143.167) NFS로 연결하여 플랫폼 별로 빌드 
+=> 더이상 NFS로 연결하지 않음
+=> ssh 원격 명령을 이용해서 jenkins로 빌드
+=> 각 아래의 서버들에 jenkins slave node를 설치하여 ssh를 이용해서 빌드
+=> jenkins 설치시 예전 서버라 자바 예전 버전으로 직업 다운로드 받아서 설치후에
+jenkins 설치해야 정상작동 
+(jdk-6u16-linux-x64-rpm.bin, jdk-6u16-linux-i586-rpm.bin 요 파일을 오라클에서
+받아서 설치) 
+=> jenkins slave node 설치는 아래 위키 참고
+(https://wiki.jenkins-ci.org/display/JENKINS/Distributed+builds)
+=> vmware의 버그로 인해, 내부 네트웍 및 dns를 간헐적으로 못찾는 버그가 있음
+=> vmware NAT 설정시에, 192.168.*.1로 설정한 인터페이스를 인터넷 설정랜에
+공유하여 사용하고, 192.168.*.1로 dhcp 서버 설정
+또한, 각 서버 설정에 dns는 직접 설정해서 사용
+(/etc/sysconfig/network-scripts/ifcfg-eth0에 PEERDNS=no 추가
+ /etc/resolv.conf에 nameserver 168.126.63.1 로 설정) 
+=> 최근 os는 search Centos6.5_64는 /etc/sysconfig/network-scripts/ifcfg-eth0에
+   DNS1="168.126.63.1" 형태로 설정)
+
+(현재 i386, x86_64 빌드)
+(i386 : Red hat Linux 7.3 VMWare에서 빌드.
+        - libc.so가 2.0.x 대여야 예전 os에서도 정상 동작하기 때문)
+		- 지원 필요한 32bit 가장 오래된 os가 red hat linux 7.3(2002년 release)이기 때문에
+		  거기서 빌드. 더 오래전 os 지원 필요시 더 오래전 os에서 빌드 필요.
+(x86_64 : Fedora Core 3 VMWare에서 빌드
+		- libc.so가 2.0.x 대여야 예전 os에서도 정상 동작하기 때문)
+		- 지원 필요한 64bit 가장 오래된 os가 Fedora Core 3(2004년 release)이기 때문에
+		  거기서 빌드. 더 오래전 os 지원 필요시 더 오래전 os에서 빌드 필요.
+		- Fedore Core 3에서 빌드시 /etc/rpm/macros.prelink의
+		  %__prelink_undo_cmd를 주석처리해야함 (안하면 아래 md5 체크섬 에러 발생).
+		  그래도 안되면, rpm spec파일의 %install 부분에 prelink -u
+		  libcom_err.so.2 추가 
+		  (fedore core3 의 버그)
+		  (관련내용:
+		  http://vijayk.blogspot.kr/2005/08/cpio-md5-sum-mismatch-on-rpms-created.html)
+
+* Yum repo 유지 방법
+10.222.223.49 (centos6 64) 서버에 구축
+1. rpm을 각각 /repo/i386, /repo/x86_64에 복사
+2. createrepo -s sha /repo/i386, createrepo -s sha /repo/x86_64 각각 실행
+   - 최근 os는 sha256이 기본이라 sha로 지정을 해줘야 옛날 os의 yum에서도 동작
+
+1. fstab 설정 : 
+10.222.223.22:/home/lordang/Work/Gabia  /gcloud_dev     nfs
+rsize=8192,wsize=8192,timeo=14,intr,tcp,bg
+2. 빌드 스크립트 심볼릭 링크:
+ln -s /gcloud_dev/Monitoring/GINMS/snmp_extend/buildpkg/buildpkg.sh
+
+* 오래전 OS (red hat linux 7.3등의) 에서 빌드해야 할 시의 주의점
+0. 예전 os에는 openssl에 hash관련(md5, sha등) 함수가 없다.
+   - openssl을 새로 컴파일해서 링크하는 방법은 shared로 링크해야 하는데,
+	 pyinstaller로 바이너리를 생성하여 다른 시스템에서 사용할시 링크 에러를
+	 내기 때문에, 사용할 수 있는 옵션이 아니다.
+   - 따라서, python 소스에 자체 구현되어 있는 hash 함수들 컴파일을 하도록 
+     Modules/Setup.dist 파일 수정을 수정해서 컴파일한다.
+1. pyinstaller 를 새로 컴파일 해야함 (libc.so의 문제로 인해)
+   - pyinstaller 리눅스의 기본 컴파일된 설정은 GLIBC 3.0 사용을 기본으로 되어
+	 있음.
+   - red hat linux 7.3등의 오래된 os는 GLIBC2.0 밖에 없음
+   - 따라서, 새로 빌드해야 함
+   - 기본 gcc 버전이 낮은 오래전 os의 경우, (red hat linux 7.3등) pyinstaller
+	 소스의 gcc warning 관련 옵션에서 에러가 나므로(해당 옵션이 없어서), 해당
+	 옵션들을 제거해주면 컴파일 됨
+2. 따로 빌드한 pyinstaller의 path를 설정해서 배포 생성함.
+   - buildpkg.sh /some/other/pyinst_path 형태로, 파라미터 path를 넣어줘서 빌드
+3. 빌드 순서 정리
+   1) python 빌드
+     - $ vi Modules/Setup.dist
+	 아래 관련 내용 주석 제거
+	 _md5 md5module.c md5.c
+
+	 _sha shamodule.c
+	 _sha256 sha256module.c
+	 _sha512 sha512module.c
+
+     - ./configure --enable-shared --enable-unicode=ucs4 --with-cxx-main=g++; make; make install
+   2) pyinstaller 빌드
+     - cd source; python ./waf configure build install
+     - 따로 해줄 게 없도록(즉, 오래전 os든 요즘 os던 다 같은 소스로 컴파일
+	   되로록), pyinstaller 소스 수정 예정 
+	 (워닝 관련 옵션 제거, glic 2.0 링크하도록 어셈블리 관련 코드 추가)
+   3) easy_install 및 pip 설치
+     - wget http://pypi.python.org/packages/2.7/s/setuptools/setuptools-0.6c11-py2.7.egg#md5=fe1f997bc722265116870bc7919059eawget
+	 - sh setuptools-0.6c11-py2.7.egg
+	 - easy_install pip
+   4) SimpleAES 설치
+     - pip install simpleaes
+   5) snmp_extend 빌드
+     - ./builidpkg.sh
+
+* 배포시 알아야 할점
+모든 파일을 onefile로 빌드시, dependency를 공유하는 실행 파일들 모두
+아래와 같은 메시지가 발생.
+WARNING: file already exists but should not: /tmp/_MEIlPaxmc/_struct.so
+pyinstaller 자체 버그로 해결되지 않음 (2013.4.4 현재 기준)
+따라서, dependency를 공유해주는 모듈은 shared로(즉, one dir)로 처리하고,
+나머지는 one file로 처리하면 WARNING 메시지 발생하지 않아서, 그렇게 처리함
+따라서, 배포 디렉토리가 .so 파일들로 약간 지저분해짐.
+하위 디렉토리로 옮기는 방식이 지원되지 않는 것으로 보임 (즉, 방법 못찾음)
+
+pyinstaller 소스를 수정하여 onefile로 빌드시에 /tmp 디렉토리를 사용하지 않고,
+$HOME/.snmp_extend를 사용하도록 수정 (tmp noexec 설정 mount시 실행 불가 문제
+해결위해)
+ - source/common/launch.c getTempPath() 함수 수정
+
+* selinux 처리
+* Fedora Core 3, 5
+=> module 단위 정책 설정 기능이 없음. 또한, selinux가 enforce 상태여도, 퍼미션
+문제 없이 정상 수집 가능.
+* Fedora Core 8
+
+=> audit2allow 설치 : yum install policycoreutils
+=> snmpwalk 시도후 permission denied.가 발생하면, audit로그를
+확인(ausearch로도 가능) 후 풀어주는 정책 수립
+	- grep snmpd /var/log/audit/audit.log | audit2allow
+=> grep snmpd /var/log/audit/audit.log | audit2allow -M snmp_extend
+   (snmp_extend.pp(바이너리)와 snmp_extend.te(텍스트) 파일 생성)
+=> 정책 모듈 추가
+   semodule -i snmp_extend.pp
+
+* 중지 방법
+	1. 중지 : setenforce 0
+	2. 다음 부팅시 실행 안하게 : /etc/selinux/config 수정 (SELINUX=disabled)
+* 허용 방법
+	1. audit2allow 설치 : yum install policycoreutils
+	2. 실패 이유 확인 : ausearch -m avc -ts recent | audit2why
+	3. 실패한 접근 허용 정책 생성 : ausearch -m avc -ts recent | audit2allow -M snmp_extend
+	4. 생성한 정책 적용 : semodule -i snmp_extend_pol
+(실제 정책 내용은 snmp_extend.te 파일 참조)
+
+
+* net-snmp 자동설치 방법
+whereis로 체크시 5.5.2 이상인 net-snmp 가 있나 확인. 없으면 설치
+rpm 에 net-snmp 5.5.2 ./configure;make;make install 기능 추가
+dist/snmpd-init.d 복사
+/usr/local/share/snmp/snmpd.conf에 복사 
+
+* 각 리눅스 배포판별 net-snmp rpm 생성 시 주의사항
+=> 아래 에러가 나오면서 rpmbuild 실패 시 export STRIP=true 실행 시 다시
+rpmbuild (cento4에서 발생)
++ /usr/lib/rpm/redhat/brp-strip-static-archive /usr/bin/strip
+/usr/bin/strip: /tmp/net-snmp-root/usr/lib/st9lY1VY/DynaLoader.a: 
+Invalid operation
+

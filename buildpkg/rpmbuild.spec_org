@@ -1,0 +1,128 @@
+
+%global __os_install_post %{nil}
+
+
+Summary: SysUp Daemon for UPS Monitoring
+Name: %{name}
+Version: %{version}
+Release: %{release}
+Prefix: /usr/local
+Group: Applications/System
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
+Packager: Dongeon kim
+Vendor: SysUp Inc.
+License: Copyright SysUp 2017-
+#Url: www.gabia.com
+#Requires: freeipmi, dmidecode, OpenIPMI
+# 자동 dependency 체크 제거 (패키지 디렉토리 안에 포함되 있기 때문에)
+#AutoReqProv: no
+# rpm binary strip disable
+# strip enable시에는 pyinstaller로 만든 바이너리가 동작 안함
+# %global __os_install_post %{nil}
+
+
+%description
+UPS 모니터링을 위한 서버데몬
+
+%prep
+rm -rf $RPM_BUILD_ROOT
+rm -rf %{_builddir}/%{name}
+
+%build
+install -d -m 755 %{_builddir}/%{name}/buildpkg
+install -d -m 755 %{_builddir}/%{name}/bin
+install -d -m 755 %{_builddir}/%{name}/conf
+install -d -m 755 %{_builddir}/%{name}/log
+install -d -m 755 %{_builddir}/%{name}/lib
+install -d -m 755 %{_builddir}/%{name}/lib/plugin
+install -d -m 755 %{_builddir}/%{name}/scripts
+
+cd %{extend_path}/src/fmsd
+make clean all
+
+install -m 755 %{extend_path}/src/fmsd/fmsd %{_builddir}/%{name}/bin/fmsd
+install -m 755 %{extend_path}/conf/fmsd.conf %{_builddir}/%{name}/conf/fmsd.conf
+install -m 755 %{extend_path}/scripts/fmsd.init %{_builddir}/%{name}/scripts/fmsd.init
+install -m 755 %{extend_path}/lib/libhvaas.a %{_builddir}/%{name}/lib/libhvaas.a
+install -m 755 %{extend_path}/lib/libhvaas.la %{_builddir}/%{name}/lib/libhvaas.la
+install -m 755 %{extend_path}/lib/libhvaas.so.0.0.0 %{_builddir}/%{name}/lib/libhvaas.so.0.0.0
+install -m 755 %{extend_path}/lib/libmysqlclient.a %{_builddir}/%{name}/lib/libmysqlclient.a
+install -m 755 %{extend_path}/lib/libmysqlservices.a %{_builddir}/%{name}/lib/libmysqlservices.a
+install -m 755 %{extend_path}/lib/libmysqlclient.so.18.0.0 %{_builddir}/%{name}/lib/libmysqlclient.so.18.0.0
+install -m 755 %{extend_path}/lib/plugin/*.so %{_builddir}/%{name}/lib/plugin
+
+
+cd %{_builddir}/%{name}/buildpkg
+
+%install
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}/bin
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}/conf
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}/log
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}/lib
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}/lib/plugin
+install -d -m 755 $RPM_BUILD_ROOT%{prefix}/%{name}/scripts
+
+install -m 755 %{_builddir}/%{name}/bin/fmsd $RPM_BUILD_ROOT%{prefix}/%{name}/bin/fmsd
+install -m 755 %{_builddir}/%{name}/conf/fmsd.conf $RPM_BUILD_ROOT%{prefix}/%{name}/conf/fmsd.conf
+install -m 755 %{_builddir}/%{name}/scripts/fmsd.init $RPM_BUILD_ROOT%{prefix}/%{name}/scripts/fmsd.init
+install -m 755 %{_builddir}/%{name}/lib/libhvaas.a $RPM_BUILD_ROOT%{prefix}/%{name}/lib/libhvaas.a
+install -m 755 %{_builddir}/%{name}/lib/libhvaas.la $RPM_BUILD_ROOT%{prefix}/%{name}/lib/libhvaas.la
+install -m 755 %{_builddir}/%{name}/lib/libhvaas.so.0.0.0 $RPM_BUILD_ROOT%{prefix}/%{name}/lib/libhvaas.so.0.0.0
+install -m 755 %{_builddir}/%{name}/lib/libmysqlclient.a $RPM_BUILD_ROOT%{prefix}/%{name}/lib/libmysqlclient.a
+install -m 755 %{_builddir}/%{name}/lib/libmysqlservices.a $RPM_BUILD_ROOT%{prefix}/%{name}/lib/libmysqlservices.a
+install -m 755 %{_builddir}/%{name}/lib/libmysqlclient.so.18.0.0 $RPM_BUILD_ROOT%{prefix}/%{name}/lib/libmysqlclient.so.18.0.0
+install -m 755 %{_builddir}/%{name}/lib/plugin/* $RPM_BUILD_ROOT%{prefix}/%{name}/lib/plugin
+
+os=$(cat /etc/redhat-release | awk '{print $1}')
+
+# shared library(libcom_err.so.2 등) prelink로 인한 rpm 설치시 cpio: MD5 sum mismatch 에러 문제
+find $RPM_BUILD_ROOT%{prefix}/%{name} -type f -name lib* -exec /usr/sbin/prelink -u {} \;
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+rm -rf %{_builddir}/%{name}
+
+%files
+%define _unpackaged_files_terminate_build 0
+%attr(0644, root, root) %{prefix}/%{name}/lib/libhvaas.a
+%attr(0644, root, root) %{prefix}/%{name}/lib/libmysqlclient.a
+%attr(0644, root, root) %{prefix}/%{name}/lib/libmysqlservices.a
+%{prefix}/%{name}
+
+
+#%pre -p /bin/bash
+##!/bin/bash
+#TEXTDOMAIN=%{name}
+
+%post -p /bin/bash
+#!/bin/bash
+#cd $RPM_BUILD_ROOT%{prefix}/%{name}/lib
+cd /usr/local/fmsd/lib
+ln -s libhvaas.so.0.0.0        libhvaas.so
+ln -s libhvaas.so.0.0.0        libhvaas.so.0
+ln -s libmysqlclient.so.18.0.0 libmysqlclient.so.18
+ln -s libmysqlclient.so.18     libmysqlclient.so
+ln -s libmysqlclient.so        libmysqlclient_r.so.18.0.0
+ln -s libmysqlclient.so        libmysqlclient_r.so.18
+ln -s libmysqlclient.so        libmysqlclient_r.so
+ln -s libmysqlclient.a         libmysqlclient_r.a
+
+
+# uninstall 전 실행.
+%preun -p /bin/bash
+#!/bin/bash
+#cd $RPM_BUILD_ROOT%{prefix}/%{name}/lib
+cd /usr/local/fmsd/lib
+rm -rf ./libhvaas.so
+rm -rf ./libhvaas.so.0
+rm -rf ./libmysqlclient.so.18
+rm -rf ./libmysqlclient.so
+rm -rf ./libmysqlclient_r.so.18.0.0
+rm -rf ./libmysqlclient_r.so.18
+rm -rf ./libmysqlclient_r.so
+rm -rf ./libmysqlclient_r.a
+
+#%changelog
+#* 2017-06-28 Dongeon Kim <terax2@naver.com>
+#- 첫 배포판 생성

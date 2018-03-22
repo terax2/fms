@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Init file for logScanner Service daemon
+#
+
+RETVAL=0
+prog="fmsd"
+conf="fmsd.conf"
+
+# Some functions to make the below more readable
+DAEMON=/fsapp/FMS/bin/$prog
+CONFIG=/fsapp/FMS/conf/$conf
+
+do_ulimit_set() {
+    ulimit -c unlimited
+    ulimit -n 16384
+    ulimit -s 512
+}
+
+start()
+{
+	# ulimit set if necessary
+	do_ulimit_set
+	
+	echo -n $"Starting $prog: "
+	$DAEMON $CONFIG >&/dev/null
+	RETVAL=$?
+	if [ "$RETVAL" = 0 ]; then
+		echo $">> Success"
+	else
+		echo $">> failure "
+	fi
+	echo
+}
+
+stop()
+{
+	echo -n $"Stopping $prog: "
+	if [ -e $DAEMON ] ; then
+	    killall -9 $DAEMON 2>/dev/null
+	fi
+	RETVAL=$?
+	if [ "$RETVAL" = 0 ]; then
+		echo $">> Success"
+	else
+		echo $">> failure"
+	fi
+	echo
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|reload}"
+		RETVAL=1
+esac
+exit $RETVAL

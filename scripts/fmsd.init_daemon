@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Source function library.
+. /etc/init.d/functions
+
+RETVAL=0
+
+prog="fmsd"
+conf="fmsd.conf"
+DAEMON=/fsapp/FMS/bin/$prog
+CONFIG=/fsapp/FMS/conf/$conf
+
+do_ulimit_set() {
+    ulimit -c unlimited
+    ulimit -n 16384
+    ulimit -s 256
+}
+
+start()
+{
+    [ -x $DAEMON ] || exit 5
+
+    do_ulimit_set
+
+    echo -n $"Starting $prog: "
+    daemon $DAEMON $CONFIG
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
+stop()
+{
+    echo -n $"Shutting down $prog: "
+    killproc $DAEMON
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    restart
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart}"
+    exit 2
+esac
+
+exit $?
